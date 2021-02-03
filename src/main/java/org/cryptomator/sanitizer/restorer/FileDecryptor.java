@@ -1,7 +1,9 @@
 package org.cryptomator.sanitizer.restorer;
 
-import static org.cryptomator.sanitizer.CryptorHolder.bestGuessCryptorProvider;
-import static org.cryptomator.sanitizer.CryptorHolder.normalizePassphrase;
+import org.cryptomator.cryptolib.DecryptingReadableByteChannel;
+import org.cryptomator.cryptolib.api.Cryptor;
+import org.cryptomator.cryptolib.api.CryptorProvider;
+import org.cryptomator.cryptolib.api.KeyFile;
 
 import java.io.Console;
 import java.io.IOException;
@@ -14,10 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import org.cryptomator.cryptolib.api.Cryptor;
-import org.cryptomator.cryptolib.api.CryptorProvider;
-import org.cryptomator.cryptolib.api.KeyFile;
-import org.cryptomator.cryptolib.v1.DecryptingReadableByteChannel;
+import static org.cryptomator.sanitizer.CryptorHolder.bestGuessCryptorProvider;
+import static org.cryptomator.sanitizer.CryptorHolder.normalizePassphrase;
 
 public class FileDecryptor {
 
@@ -36,8 +36,8 @@ public class FileDecryptor {
 		CryptorProvider provider = bestGuessCryptorProvider(keyFile);
 		Cryptor cryptor = provider.createFromKeyFile(keyFile, normalizePassphrase(keyFile, passphrase), keyFile.getVersion());
 		try (ReadableByteChannel readableByteChannel = Files.newByteChannel(ciphertextPath, StandardOpenOption.READ);
-				ReadableByteChannel decryptingReadableByteChannel = new DecryptingReadableByteChannel(readableByteChannel, cryptor, true);
-				WritableByteChannel writableByteChannel = Files.newByteChannel(outputPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+             ReadableByteChannel decryptingReadableByteChannel = new DecryptingReadableByteChannel(readableByteChannel, cryptor, true);
+             WritableByteChannel writableByteChannel = Files.newByteChannel(outputPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
 			ByteBuffer buff = ByteBuffer.allocate(cryptor.fileContentCryptor().ciphertextChunkSize());
 			while (decryptingReadableByteChannel.read(buff) != -1) {
 				buff.flip();

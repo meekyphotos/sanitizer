@@ -1,8 +1,12 @@
 package org.cryptomator.sanitizer;
 
-import static java.lang.String.format;
-import static java.nio.file.Files.isRegularFile;
-import static java.nio.file.Files.readAllBytes;
+import org.cryptomator.cryptolib.Cryptors;
+import org.cryptomator.cryptolib.api.Cryptor;
+import org.cryptomator.cryptolib.api.CryptorProvider;
+import org.cryptomator.cryptolib.api.InvalidPassphraseException;
+import org.cryptomator.cryptolib.api.KeyFile;
+import org.cryptomator.sanitizer.integrity.AbortCheckException;
+import org.cryptomator.sanitizer.integrity.problems.Problems;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -13,17 +17,13 @@ import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.Optional;
 
-import org.cryptomator.cryptolib.Cryptors;
-import org.cryptomator.cryptolib.api.Cryptor;
-import org.cryptomator.cryptolib.api.CryptorProvider;
-import org.cryptomator.cryptolib.api.InvalidPassphraseException;
-import org.cryptomator.cryptolib.api.KeyFile;
-import org.cryptomator.sanitizer.integrity.AbortCheckException;
-import org.cryptomator.sanitizer.integrity.problems.Problems;
+import static java.lang.String.format;
+import static java.nio.file.Files.isRegularFile;
+import static java.nio.file.Files.readAllBytes;
 
 public class CryptorHolder implements AutoCloseable {
 
-	private static final int VAULT_VERSION = 6;
+	private static final int VAULT_VERSION = 7;
 
 	private static final int VAULT_VERSION_INTRODUCING_PASSWORD_NORMALIZATION = 6;
 
@@ -86,6 +86,7 @@ public class CryptorHolder implements AutoCloseable {
 		case 4:
 		case 5:
 		case 6:
+		case 7:
 			return Cryptors.version1(strongSecureRandom());
 		default:
 			throw new IllegalArgumentException("Unsupported vault version " + keyFile.getVersion());

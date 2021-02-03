@@ -1,10 +1,8 @@
 package org.cryptomator.sanitizer.restorer;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.readAllBytes;
-import static java.util.stream.Collectors.toList;
+import org.cryptomator.cryptolib.DecryptingReadableByteChannel;
+import org.cryptomator.cryptolib.api.AuthenticationFailedException;
+import org.cryptomator.cryptolib.api.Cryptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,9 +21,12 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.cryptomator.cryptolib.api.AuthenticationFailedException;
-import org.cryptomator.cryptolib.api.Cryptor;
-import org.cryptomator.cryptolib.v1.DecryptingReadableByteChannel;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.readAllBytes;
+import static java.util.stream.Collectors.toList;
+
 
 class ScannedVault {
 
@@ -78,7 +79,13 @@ class ScannedVault {
 			String encryptedName = matcher.group(1);
 			String suffix = pathAsString.substring(matcher.end());
 			EncryptedFile file = new EncryptedFile(path, encryptedName, suffix.isEmpty() ? Optional.empty() : Optional.of(suffix));
-			encryptedDirectoriesByPath.get(path.getParent()).add(file);
+            final Path parent = path.getParent();
+            // fixme: can it be saved??
+            if ( parent == null || encryptedDirectoriesByPath.get(parent) == null ) {
+              return false;
+            } else {
+              encryptedDirectoriesByPath.get(parent).add(file);
+            }
 			return true;
 		} else {
 			return false;
@@ -304,8 +311,8 @@ class ScannedVault {
 			Path target = firstFreeName(targetDirectory, name, suffix.orElse(""));
 			System.out.println(dDir.relativize(path) + " -> " + target);
 			try (ReadableByteChannel readableByteChannel = Files.newByteChannel(path, StandardOpenOption.READ);
-					ReadableByteChannel decryptingReadableByteChannel = new DecryptingReadableByteChannel(readableByteChannel, cryptor, true);
-					WritableByteChannel writableByteChannel = Files.newByteChannel(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+                 ReadableByteChannel decryptingReadableByteChannel = new DecryptingReadableByteChannel(readableByteChannel, cryptor, true);
+                 WritableByteChannel writableByteChannel = Files.newByteChannel(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
 				ByteBuffer buff = ByteBuffer.allocate(cryptor.fileContentCryptor().ciphertextChunkSize());
 				while (decryptingReadableByteChannel.read(buff) != -1) {
 					buff.flip();
